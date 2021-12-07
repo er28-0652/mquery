@@ -1,12 +1,29 @@
 version: '3'
 services:
   web:
+    container_name: web
+    restart: always 
+    build:
+      context: .
+      dockerfile: deploy/docker/nginx.Dockerfile
+      args:
+        # define these variables in `.env` file
+        - BASIC_AUTH_USERNAME=${BASIC_AUTH_USERNAME}
+        - BASIC_AUTH_PASSWORD=${BASIC_AUTH_PASSWORD}
+    depends_on:
+      - app
+    ports:
+      - "80:80"
+    networks:
+      - nginx_network
+  app:
+    container_name: app
     restart: always
     build:
       context: .
       dockerfile: deploy/docker/web.Dockerfile
-    ports:
-    - "80:5000"
+    expose:
+      - 5000
     links:
     - redis
     volumes:
@@ -14,6 +31,8 @@ services:
     depends_on:
       - "redis"
       - "ursadb"
+    networks:
+      - nginx_network
   daemon:
     restart: always
     build:
@@ -27,6 +46,8 @@ services:
     depends_on:
       - "redis"
       - "ursadb"
+    networks:
+      - nginx_network
   ursadb:
     restart: always
     build:
@@ -37,6 +58,14 @@ services:
     volumes:
     - "${SAMPLES_DIR}:/mnt/samples"
     - "${INDEX_DIR}:/var/lib/ursadb"
+    networks:
+      - nginx_network
   redis:
     restart: always
     image: redis
+    networks:
+      - nginx_network
+    
+networks:
+  nginx_network:
+    driver: bridge
