@@ -62,6 +62,9 @@ def download(job_id: str, ordinal: int, file_path: str) -> FileResponse:
     (index of the file in that job), to ensure that user can't download
     arbitrary files (for example "/etc/passwd").
     """
+    raise HTTPException(
+            status_code=403, detail=f"unavailable"
+        )
     if not db.job_contains(JobId(job_id), ordinal, file_path):
         raise NotFound("No such file in result set.")
 
